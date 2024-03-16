@@ -2,14 +2,19 @@
 bashortcut(){
     local SHORTCUT_KEYS="hjklasdfguiopqwertzbnmyxcv"
     local DO_CLEAR_MENU=true
-    
+    local DEFAULT_COMMANDS_SOURCE=~/.bashortcuts
+
     local i
     for i in $(seq 0 ${#SHORTCUT_KEYS})
         do local shortcuts[$i]=${SHORTCUT_KEYS:$i:1}
     done
-    
+
+    if [ ! -e ${DEFAULT_COMMANDS_SOURCE} ] ; then
+        echo "You haven't created a file containing commands yet. Create $DEFAULT_COMMANDS_SOURCE"
+        return 1
+    fi
     local commands
-    readarray -t commands < ~/.bashortcuts
+    readarray -t commands < "${DEFAULT_COMMANDS_SOURCE}"
     
     local commandsLength=${#commands[@]}
     local shortcutsLength=$(( ${#shortcuts[@]} - 1)) # null terminated string??
@@ -47,6 +52,7 @@ bashortcut(){
     
     echo "${executedCommand}"
     eval "${executedCommand}"
+    return 0
 }
 
 bashortcut
