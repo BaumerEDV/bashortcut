@@ -2,8 +2,10 @@
 bashortcut(){
     ### SETTINGS
     local SHORTCUT_KEYS="hjklasdfguiopqwertzbnmyxcv"
-    local DO_CLEAR_MENU=false
+    local DO_CLEAR_MENU=true
     local DEFAULT_COMMANDS_SOURCE=~/.bashortcuts
+    local SEARCH_IN_PARENT_DIRECTORIES_AFTER_SOMETHING_WAS_FOUND=true
+    local SEARCH_IN_HOME_AFTER_SOMETHING_WAS_FOUND=true
 
     # Set up shortcut keys
     local i
@@ -21,10 +23,11 @@ bashortcut(){
 
     ### END SETTINGS
 
-    # Set up commands
+    ### SET UP COMMANDS
     local commands
     local isHomeReadAlready=false
 
+    # search this directory and parent directories
     local directoryToSearch=$PWD
     while [ ! "$directoryToSearch" = "" ] ; do
         if [ "$directoryToSearch" = ~ ] ; then
@@ -48,20 +51,25 @@ bashortcut(){
             continue
         fi
         commands+=("${newCommands[@]}")
+
+        if [ ${#newCommands[@]} != 0 ] && [ "${SEARCH_IN_PARENT_DIRECTORIES_AFTER_SOMETHING_WAS_FOUND}" = false ] ; then
+            break
+        fi
     done
 
-    echo "home investigated? $isHomeReadAlready"
-    echo $DEFAULT_COMMANDS_SOURCE
-    if [ "$isHomeReadAlready" = false ] && [ -e ${DEFAULT_COMMANDS_SOURCE} ] ; then
-        readarray -t newCommands < "${DEFAULT_COMMANDS_SOURCE}"
-        commands+=("${newCommands[@]}")
-    fi
-    if [ ! -e ${DEFAULT_COMMANDS_SOURCE} ] && [ ${#newCommands[@]} = 0 ]  ; then
-        echo "You haven't created a file containing commands yet. Create $DEFAULT_COMMANDS_SOURCE"
-        return 1
+    # Search home directory for defaults
+    if [ ${#commands[@]} != 0 ] && [ "$SEARCH_IN_HOME_AFTER_SOMETHING_WAS_FOUND" = true ] ; then
+        if [ "$isHomeReadAlready" = false ] && [ -e ${DEFAULT_COMMANDS_SOURCE} ] ; then
+            readarray -t newCommands < "${DEFAULT_COMMANDS_SOURCE}"
+            commands+=("${newCommands[@]}")
+        fi
+        if [ ! -e ${DEFAULT_COMMANDS_SOURCE} ] && [ ${#newCommands[@]} = 0 ]  ; then
+            echo "You haven't created a file containing commands yet. Create $DEFAULT_COMMANDS_SOURCE"
+            return 1
+        fi
     fi
     
-    
+    # Verify there are any commands 
     local commandsLength=${#commands[@]}
     if [ $commandsLength = 0 ] ; then
         echo "You haven't defined any commands inside $DEFAULT_COMMANDS_SOURCE"
@@ -69,6 +77,7 @@ bashortcut(){
         return 1
     fi
     local shortcutsLength=$(( ${#shortcuts[@]} - 1)) # null terminated string??
+    ### END SET UP COMMANDS
     
     # Set up offers
     if (( commandsLength > shortcutsLength )); then
