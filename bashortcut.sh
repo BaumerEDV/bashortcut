@@ -17,6 +17,11 @@ bashortcut(){
     readarray -t commands < "${DEFAULT_COMMANDS_SOURCE}"
     
     local commandsLength=${#commands[@]}
+    if [ $commandsLength = 0 ] ; then
+        echo "You haven't defined any commands inside $DEFAULT_COMMANDS_SOURCE"
+        echo "Edit it with a text editor to get started"
+        return 1
+    fi
     local shortcutsLength=$(( ${#shortcuts[@]} - 1)) # null terminated string??
     
     if (( commandsLength > shortcutsLength )); then
