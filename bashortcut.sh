@@ -2,7 +2,7 @@
 bashortcut(){
     ### SETTINGS
     local SHORTCUT_KEYS="hjklasdfguiopqwertzbnmyxcv"
-    local DO_CLEAR_MENU=true
+    local DO_CLEAR_MENU=false
     local DEFAULT_COMMANDS_SOURCE=~/.bashortcuts
 
     # Set up shortcut keys
@@ -22,12 +22,46 @@ bashortcut(){
     ### END SETTINGS
 
     # Set up commands
-    if [ ! -e ${DEFAULT_COMMANDS_SOURCE} ] ; then
+    local commands
+    local isHomeReadAlready=false
+
+    local directoryToSearch=$PWD
+    while [ ! "$directoryToSearch" = "" ] ; do
+        if [ "$directoryToSearch" = ~ ] ; then
+            isHomeReadAlready=true
+        fi
+
+        local shortcutsFile="${directoryToSearch}/.bashortcuts"
+        # search in parent directory for next iteration
+        directoryToSearch="${directoryToSearch%/}"
+        directoryToSearch="${directoryToSearch%/*}"
+
+        if [ ! -e "${shortcutsFile}" ] ; then
+            continue
+        fi
+
+        local newCommands
+        readarray -t newCommands < "${shortcutsFile}"
+        if [ ${#newCommands[@]} = 0 ] ; then
+            echo "You haven't defined any commands inside ${shortcutsFile}"
+            echo "Edit it with a text editor to get started"
+            continue
+        fi
+        commands+=("${newCommands[@]}")
+    done
+
+    echo "home investigated? $isHomeReadAlready"
+    echo $DEFAULT_COMMANDS_SOURCE
+    if [ "$isHomeReadAlready" = false ] && [ -e ${DEFAULT_COMMANDS_SOURCE} ] ; then
+        readarray -t newCommands < "${DEFAULT_COMMANDS_SOURCE}"
+        commands+=("${newCommands[@]}")
+    fi
+    if [ ! -e ${DEFAULT_COMMANDS_SOURCE} ] && [ ${#newCommands[@]} = 0 ]  ; then
         echo "You haven't created a file containing commands yet. Create $DEFAULT_COMMANDS_SOURCE"
         return 1
     fi
-    local commands
-    readarray -t commands < "${DEFAULT_COMMANDS_SOURCE}"
+    
+    
     local commandsLength=${#commands[@]}
     if [ $commandsLength = 0 ] ; then
         echo "You haven't defined any commands inside $DEFAULT_COMMANDS_SOURCE"
