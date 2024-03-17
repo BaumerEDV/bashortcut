@@ -58,14 +58,13 @@ bashortcut(){
     done
 
     # Search home directory for defaults
-    if [ ${#commands[@]} != 0 ] && [ "$SEARCH_IN_HOME_AFTER_SOMETHING_WAS_FOUND" = true ] ; then
-        if [ "$isHomeReadAlready" = false ] && [ -e ${DEFAULT_COMMANDS_SOURCE} ] ; then
-            readarray -t newCommands < "${DEFAULT_COMMANDS_SOURCE}"
-            commands+=("${newCommands[@]}")
-        fi
-        if [ ! -e ${DEFAULT_COMMANDS_SOURCE} ] && [ ${#newCommands[@]} = 0 ]  ; then
-            echo "You haven't created a file containing commands yet. Create $DEFAULT_COMMANDS_SOURCE"
-            return 1
+    # (if home is not searched yet) && ((commands=0) || (commands!=0 && keepsearching))
+    if [ "$isHomeReadAlready" = false ] ; then
+        if (([ ${#commands[@]} = 0 ]) || ([ ${#commands[@]} != 0 ] && [ "$SEARCH_IN_HOME_AFTER_SOMETHING_WAS_FOUND" = true ])) ; then
+            if  [ -e ${DEFAULT_COMMANDS_SOURCE} ] ; then
+                readarray -t newCommands < "${DEFAULT_COMMANDS_SOURCE}"
+                commands+=("${newCommands[@]}")
+            fi
         fi
     fi
     
